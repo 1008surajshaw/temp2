@@ -1,25 +1,37 @@
 import { IFeatureRepository } from '../interfaces/IFeatureRepository';
-import { Feature } from '../models/Feature';
+import { Feature, IFeature } from '../models/Feature';
 import { BaseRepository } from './BaseRepository';
 
-export class FeatureRepository extends BaseRepository<Feature> implements IFeatureRepository {
+export class FeatureRepository extends BaseRepository<IFeature> implements IFeatureRepository {
   constructor() {
     super(Feature);
   }
 
-  async findByOrganization(organizationId: number): Promise<Feature[]> {
-    return await this.model.findAll({
-      where: { organization_id: organizationId } as any,
-      order: [['createdAt', 'DESC']],
+  async findByOrganization(organizationId: string): Promise<IFeature[]> {
+    return await this.model.find({ organization_id: organizationId }).sort({ createdAt: -1 });
+  }
+
+  async findByFeatureKey(organizationId: string, featureKey: string): Promise<IFeature | null> {
+    return await this.model.findOne({
+      organization_id: organizationId,
+      feature_key: featureKey,
     });
   }
 
-  async findByFeatureKey(organizationId: number, featureKey: string): Promise<Feature | null> {
-    return await this.model.findOne({
-      where: { 
-        organization_id: organizationId,
-        feature_key: featureKey 
-      } as any,
-    });
+  async findById(id: string): Promise<IFeature | null> {
+    return await this.model.findById(id);
+  }
+
+  async create(data: Partial<IFeature>): Promise<IFeature> {
+    return await this.model.create(data);
+  }
+
+  async update(id: string, data: Partial<IFeature>): Promise<IFeature | null> {
+    return await this.model.findByIdAndUpdate(id, data, { new: true });
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const result = await this.model.findByIdAndDelete(id);
+    return !!result;
   }
 }

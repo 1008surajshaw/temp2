@@ -1,66 +1,73 @@
+import mongoose from 'mongoose';
 import { IUsageService } from '../interfaces/IUsageService';
 import { IUsageRepository } from '../interfaces/IUsageRepository';
+import { IFeatureRepository } from '../interfaces/IFeatureRepository';
 import { CreateUsageDto, UpdateUsageDto, UsageResponseDto } from '../dto/usage.dto';
 
 export class UsageService implements IUsageService {
-  constructor(private usageRepository: IUsageRepository) {}
+  constructor(
+    private usageRepository: IUsageRepository,
+    private featureRepository: IFeatureRepository
+  ) {}
 
   async createUsage(data: CreateUsageDto): Promise<UsageResponseDto> {
-    const usage = await this.usageRepository.create(data);
-    const usageWithFeature = await this.usageRepository.findById(usage.id);
-    return this.mapToResponseDto(usageWithFeature!);
+    const usage = await this.usageRepository.create({
+      user_id: new mongoose.Types.ObjectId(data.user_id),
+      feature_id: new mongoose.Types.ObjectId(data.feature_id),
+      usage_count: data.usage_count,
+      usage_date: data.usage_date || new Date(),
+    });
+
+    const feature = await this.featureRepository.findById(data.feature_id);
+    return this.mapToResponseDto(usage, feature);
   }
 
-  async updateUsage(id: number, data: UpdateUsageDto): Promise<UsageResponseDto | null> {
+  async updateUsage(id: string, data: UpdateUsageDto): Promise<UsageResponseDto | null> {
     const usage = await this.usageRepository.update(id, data);
     if (!usage) return null;
 
-    const usageWithFeature = await this.usageRepository.findById(id);
-    return this.mapToResponseDto(usageWithFeature!);
+    const feature = await this.featureRepository.findById((usage.feature_id as mongoose.Types.ObjectId).toString());
+    return this.mapToResponseDto(usage, feature);
   }
 
-  async getUsageById(id: number): Promise<UsageResponseDto | null> {
+  async getUsageById(id: string): Promise<UsageResponseDto | null> {
     const usage = await this.usageRepository.findById(id);
-    return usage ? this.mapToResponseDto(usage) : null;
+    if (!usage) return null;
+
+    const feature = await this.featureRepository.findById((usage.feature_id as mongoose.Types.ObjectId).toString());
+    return this.mapToResponseDto(usage, feature);
   }
 
-  async getUsageByUser(userId: number): Promise<UsageResponseDto[]> {
+  async getUsageByUser(userId: string): Promise<UsageResponseDto[]> {
     const usages = await this.usageRepository.findByUser(userId);
-    return usages.map(this.mapToResponseDto);
+    const results = await Promise.all(
+      usages.map(async (usage) => {
+        const feature = await this.featureRepository.findById((usage.feature_id as mongoose.Types.ObjectId).toString());
+        return this.mapToResponseDto(usage, feature);
+      })
+    );
+    return results;
   }
 
-  async getUsageByUserAndPeriod(userId: number, period: string): Promise<UsageResponseDto[]> {
-    const usages = await this.usageRepository.findByUserAndPeriod(userId, period);
-    return usages.map(this.mapToResponseDto);
+  async getUsageByUserAndFeature(userId: string, featureId: string): Promise<UsageResponseDto[]> {
+    const usages = await this.usageRepository.findByUserAndFeature(userId, featureId);
+    const feature = await this.featureRepository.findById(featureId);
+    return usages.map(usage => this.mapToResponseDto(usage, feature));
   }
 
-  async incrementUsage(userId: number, featureId: number, period: string, increment: number): Promise<UsageResponseDto | null> {
-    const usage = await this.usageRepository.incrementUsage(userId, featureId, period, increment);
-    return usage ? this.mapToResponseDto(usage) : null;
+  async getTotalUsageByUserAndFeature(userId: string, featureId: string): Promise<number> {
+    return await this.usageRepository.getTotalUsageByUserAndFeature(userId, featureId);
   }
 
-  async checkUsageLimit(userId: number, featureId: number, period: string): Promise<boolean> {
-    const usage = await this.usageRepository.findByUserAndFeature(userId, featureId, period);
-    if (!usage) return true; // No usage record means within limit
-    
-    return usage.usage_count < usage.usage_limit;
-  }
-
-  private mapToResponseDto(usage: any): UsageResponseDto {
-    const percentageUsed = usage.usage_limit > 0 
-      ? Math.round((usage.usage_count / usage.usage_limit) * 100)
-      : 0;
-
+  private mapToResponseDto(usage: any, feature: any): UsageResponseDto {
     return {
       id: usage.id,
-      user_id: usage.user_id,
-      feature_id: usage.feature_id,
-      feature_name: usage.feature?.name || '',
-      feature_key: usage.feature?.feature_key || '',
+      user_id: (usage.user_id as mongoose.Types.ObjectId).toString(),
+      feature_id: (usage.feature_id as mongoose.Types.ObjectId).toString(),
+      feature_name: feature?.name || '',
+      feature_key: feature?.feature_key || '',
       usage_count: usage.usage_count,
-      usage_limit: usage.usage_limit,
-      period: usage.period,
-      percentage_used: percentageUsed,
+      usage_date: usage.usage_date,
       createdAt: usage.createdAt,
       updatedAt: usage.updatedAt,
     };

@@ -28,7 +28,7 @@ export class FeatureController {
 
   async updateFeature(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const data: UpdateFeatureDto = req.body;
       const feature = await this.featureService.updateFeature(id, data);
       
@@ -58,7 +58,7 @@ export class FeatureController {
 
   async deleteFeature(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id =req.params.id;
       const deleted = await this.featureService.deleteFeature(id);
       
       if (!deleted) {
@@ -86,7 +86,8 @@ export class FeatureController {
 
   async getFeatureById(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
+
       const feature = await this.featureService.getFeatureById(id);
       
       if (!feature) {
@@ -114,7 +115,7 @@ export class FeatureController {
 
   async getFeaturesByOrganization(req: Request, res: Response): Promise<void> {
     try {
-      const organizationId = parseInt(req.params.organizationId);
+      const organizationId = req.params.organizationId;
       const features = await this.featureService.getFeaturesByOrganization(organizationId);
       
       const response: ApiResponse = {
@@ -133,7 +134,7 @@ export class FeatureController {
 
   async toggleFeatureStatus(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const feature = await this.featureService.toggleFeatureStatus(id);
       
       if (!feature) {

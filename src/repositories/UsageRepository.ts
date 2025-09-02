@@ -1,58 +1,55 @@
+import mongoose from 'mongoose';
 import { IUsageRepository } from '../interfaces/IUsageRepository';
-import { Usage } from '../models/Usage';
-import { Feature } from '../models/Feature';
+import { Usage, IUsage } from '../models/Usage';
 import { BaseRepository } from './BaseRepository';
 
-export class UsageRepository extends BaseRepository<Usage> implements IUsageRepository {
+export class UsageRepository extends BaseRepository<IUsage> implements IUsageRepository {
   constructor() {
     super(Usage);
   }
 
-  async findByUser(userId: number): Promise<Usage[]> {
-    return await this.model.findAll({
-      where: { user_id: userId } as any,
-      include: [
-        {
-          model: Feature,
-          as: 'feature',
-        },
-      ],
-      order: [['createdAt', 'DESC']],
-    });
+  async findByUser(userId: string): Promise<IUsage[]> {
+    return await this.model.find({ user_id: new mongoose.Types.ObjectId(userId) }).sort({ createdAt: -1 });
   }
 
-  async findByUserAndFeature(userId: number, featureId: number, period: string): Promise<Usage | null> {
-    return await this.model.findOne({
-      where: { 
-        user_id: userId,
-        feature_id: featureId,
-        period: period
-      } as any,
-    });
+  async findByUserAndFeature(userId: string, featureId: string): Promise<IUsage[]> {
+    return await this.model.find({ 
+      user_id: new mongoose.Types.ObjectId(userId), 
+      feature_id: new mongoose.Types.ObjectId(featureId) 
+    }).sort({ createdAt: -1 });
   }
 
-  async findByUserAndPeriod(userId: number, period: string): Promise<Usage[]> {
-    return await this.model.findAll({
-      where: { 
-        user_id: userId,
-        period: period
-      } as any,
-      include: [
-        {
-          model: Feature,
-          as: 'feature',
-        },
-      ],
-    });
+  async findByFeature(featureId: string): Promise<IUsage[]> {
+    return await this.model.find({ feature_id: new mongoose.Types.ObjectId(featureId) }).sort({ createdAt: -1 });
   }
 
-  async incrementUsage(userId: number, featureId: number, period: string, increment: number): Promise<Usage | null> {
-    const usage = await this.findByUserAndFeature(userId, featureId, period);
-    if (usage) {
-      return await this.update(usage.id, {
-        usage_count: usage.usage_count + increment
-      });
-    }
-    return null;
+  async getTotalUsageByUserAndFeature(userId: string, featureId: string): Promise<number> {
+    const result = await this.model.aggregate([
+      { 
+        $match: { 
+          user_id: new mongoose.Types.ObjectId(userId), 
+          feature_id: new mongoose.Types.ObjectId(featureId) 
+        } 
+      },
+      { 
+        $group: { 
+          _id: null, 
+          total: { $sum: '$usage_count' } 
+        } 
+      }
+    ]);
+    return result[0]?.total || 0;
+  }
+
+  async findById(id: string): Promise<IUsage | null> {
+    return await this.model.findById(id);
+  }
+
+  async create(data: Partial<IUsage>): Promise<IUsage> {
+    return await this.model.create(data);
+  }
+
+  async update(id: string, data: Partial<IUsage>): Promise<IUsage | null> {
+    return await this.model.findByIdAndUpdate(id, data, { new: true });
   }
 }

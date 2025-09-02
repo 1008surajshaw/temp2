@@ -1,62 +1,38 @@
-import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/database';
+import mongoose, { Document, Schema } from 'mongoose';
 
-export class Usage extends Model {
-  public id!: number;
-  public user_id!: number;
-  public feature_id!: number;
-  public usage_count!: number;
-  public usage_limit!: number;
-  public period!: string;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+export interface IUsage extends Document {
+  id: string;
+  user_id: mongoose.Types.ObjectId;
+  feature_id: mongoose.Types.ObjectId;
+  usage_count: number;
+  usage_date: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-Usage.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    user_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id',
-      },
-    },
-    feature_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'features',
-        key: 'id',
-      },
-    },
-    usage_count: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
-    usage_limit: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    period: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
+const usageSchema = new Schema<IUsage>({
+  user_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
   },
-  {
-    sequelize,
-    modelName: 'Usage',
-    tableName: 'usage',
-    indexes: [
-      {
-        unique: true,
-        fields: ['user_id', 'feature_id', 'period'],
-      },
-    ],
-  }
-);
+  feature_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Feature',
+    required: true,
+  },
+  usage_count: {
+    type: Number,
+    required: true,
+    default: 0,
+  },
+  usage_date: {
+    type: Date,
+    required: true,
+    default: Date.now,
+  },
+}, {
+  timestamps: true,
+});
+
+export const Usage = mongoose.model<IUsage>('Usage', usageSchema);

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { IPlanService } from '../interfaces/IPlanService';
 import { IPlanRepository } from '../interfaces/IPlanRepository';
 import { IFeatureRepository } from '../interfaces/IFeatureRepository';
@@ -12,7 +13,7 @@ export class PlanService implements IPlanService {
 
   async createPlan(data: CreatePlanDto): Promise<PlanResponseDto> {
     const plan = await this.planRepository.create({
-      organization_id: data.organization_id,
+      organization_id: new mongoose.Types.ObjectId(data.organization_id),
       name: data.name,
       description: data.description,
       price: data.price,
@@ -22,8 +23,8 @@ export class PlanService implements IPlanService {
     // Create plan features
     for (const feature of data.features) {
       await PlanFeature.create({
-        plan_id: plan.id,
-        feature_id: feature.feature_id,
+        plan_id: plan._id,
+        feature_id: new mongoose.Types.ObjectId(feature.feature_id),
         feature_limit: feature.feature_limit,
         is_unlimited: feature.is_unlimited,
       });
@@ -33,7 +34,7 @@ export class PlanService implements IPlanService {
     return this.mapToResponseDto(planWithFeatures!);
   }
 
-  async updatePlan(id: number, data: UpdatePlanDto): Promise<PlanResponseDto | null> {
+  async updatePlan(id: string, data: UpdatePlanDto): Promise<PlanResponseDto | null> {
     const plan = await this.planRepository.update(id, {
       name: data.name,
       description: data.description,
@@ -46,11 +47,11 @@ export class PlanService implements IPlanService {
 
     // Update features if provided
     if (data.features) {
-      await PlanFeature.destroy({ where: { plan_id: id } });
+      await PlanFeature.deleteMany({ plan_id: id });
       for (const feature of data.features) {
         await PlanFeature.create({
-          plan_id: id,
-          feature_id: feature.feature_id,
+          plan_id: new mongoose.Types.ObjectId(id),
+          feature_id: new mongoose.Types.ObjectId(feature.feature_id),
           feature_limit: feature.feature_limit,
           is_unlimited: feature.is_unlimited,
         });
@@ -61,19 +62,19 @@ export class PlanService implements IPlanService {
     return this.mapToResponseDto(planWithFeatures!);
   }
 
-  async deletePlan(id: number): Promise<boolean> {
+  async deletePlan(id: string): Promise<boolean> {
     return await this.planRepository.delete(id);
   }
 
-  async getPlanById(id: number): Promise<PlanResponseDto | null> {
+  async getPlanById(id: string): Promise<PlanResponseDto | null> {
     const plan = await this.planRepository.findWithFeatures(id);
     return plan ? this.mapToResponseDto(plan) : null;
   }
 
-  async getPlansByOrganization(organizationId: number): Promise<PlanResponseDto[]> {
+  async getPlansByOrganization(organizationId: string): Promise<PlanResponseDto[]> {
     const plans = await this.planRepository.findByOrganization(organizationId);
     const plansWithFeatures = await Promise.all(
-      plans.map(plan => this.planRepository.findWithFeatures(plan.id))
+      plans.map(plan => this.planRepository.findWithFeatures((plan._id as mongoose.Types.ObjectId).toString()))
     );
     return plansWithFeatures.filter(Boolean).map(this.mapToResponseDto);
   }
@@ -81,7 +82,7 @@ export class PlanService implements IPlanService {
   private mapToResponseDto(plan: any): PlanResponseDto {
     return {
       id: plan.id,
-      organization_id: plan.organization_id,
+      organization_id: (plan.organization_id as mongoose.Types.ObjectId).toString(),
       name: plan.name,
       description: plan.description,
       price: plan.price,
@@ -89,7 +90,7 @@ export class PlanService implements IPlanService {
       is_active: plan.is_active,
       features: plan.planFeatures?.map((pf: any) => ({
         id: pf.id,
-        feature_id: pf.feature_id,
+        feature_id: (pf.feature_id as mongoose.Types.ObjectId).toString(),
         feature_name: pf.feature.name,
         feature_key: pf.feature.feature_key,
         feature_limit: pf.feature_limit,

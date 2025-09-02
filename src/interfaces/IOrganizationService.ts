@@ -2,6 +2,6 @@ import { CreateOrganizationDto, UpdateOrganizationDto, OrganizationResponseDto }
 
 export interface IOrganizationService {
   createOrganization(data: CreateOrganizationDto): Promise<OrganizationResponseDto>;
-  updateOrganization(id: number, data: UpdateOrganizationDto): Promise<OrganizationResponseDto | null>;
-  getOrganizationById(id: number): Promise<OrganizationResponseDto | null>;
+  updateOrganization(id: string, data: UpdateOrganizationDto): Promise<OrganizationResponseDto | null>;
+  getOrganizationById(id: string): Promise<OrganizationResponseDto | null>;
 }

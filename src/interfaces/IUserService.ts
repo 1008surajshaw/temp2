@@ -3,9 +3,9 @@ import { PaginatedResponse } from '../types/common';
 
 export interface IUserService {
   getAllUsers(page: number, limit: number): Promise<PaginatedResponse<UserResponseDto>>;
-  getUserById(id: number): Promise<UserResponseDto | null>;
+  getUserById(id: string): Promise<UserResponseDto | null>;
   createUser(userData: CreateUserDto): Promise<UserResponseDto>;
-  updateUser(id: number, userData: UpdateUserDto): Promise<UserResponseDto | null>;
-  deleteUser(id: number): Promise<boolean>;
+  updateUser(id: string, userData: UpdateUserDto): Promise<UserResponseDto | null>;
+  deleteUser(id: string): Promise<boolean>;
   getUserByEmail(email: string): Promise<UserResponseDto | null>;
 }

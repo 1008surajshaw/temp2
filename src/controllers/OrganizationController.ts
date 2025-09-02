@@ -28,7 +28,7 @@ export class OrganizationController {
 
   async updateOrganization(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const data: UpdateOrganizationDto = req.body;
       const organization = await this.organizationService.updateOrganization(id, data);
       
@@ -58,7 +58,7 @@ export class OrganizationController {
 
   async getOrganizationById(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const organization = await this.organizationService.getOrganizationById(id);
       
       if (!organization) {

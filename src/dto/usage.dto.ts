@@ -1,26 +1,23 @@
 export interface CreateUsageDto {
-  user_id: number;
-  feature_id: number;
+  user_id: string;
+  feature_id: string;
   usage_count: number;
-  usage_limit: number;
-  period: string;
+  usage_date?: Date;
 }
 
 export interface UpdateUsageDto {
   usage_count?: number;
-  usage_limit?: number;
+  usage_date?: Date;
 }
 
 export interface UsageResponseDto {
-  id: number;
-  user_id: number;
-  feature_id: number;
+  id: string;
+  user_id: string;
+  feature_id: string;
   feature_name: string;
   feature_key: string;
   usage_count: number;
-  usage_limit: number;
-  period: string;
-  percentage_used: number;
+  usage_date: Date;
   createdAt: Date;
   updatedAt: Date;
 }

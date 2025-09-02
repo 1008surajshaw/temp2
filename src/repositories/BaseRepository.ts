@@ -1,32 +1,32 @@
-import { Model, ModelCtor, WhereOptions } from 'sequelize';
+import { Document, Model } from 'mongoose';
 
-export class BaseRepository<T extends Model> {
-  protected model: ModelCtor<T>;
+export class BaseRepository<T extends Document> {
+  protected model: Model<T>;
 
-  constructor(model: ModelCtor<T>) {
+  constructor(model: Model<T>) {
     this.model = model;
   }
 
-  async findById(id: number): Promise<T | null> {
-    return await this.model.findByPk(id);
-  }
-
   async create(data: Partial<T>): Promise<T> {
-    return await this.model.create(data as any);
+    return await this.model.create(data);
   }
 
-  async update(id: number, data: Partial<T>): Promise<T | null> {
-    const whereClause: WhereOptions = { id } as any;
-    const [affectedRows, updatedRecords] = await this.model.update(
-      data as any,
-      { where: whereClause, returning: true }
-    );
-    return affectedRows > 0 ? updatedRecords[0] : null;
+  async findById(id: string): Promise<T | null> {
+    return await this.model.findById(id);
   }
 
-  async delete(id: number): Promise<boolean> {
-    const whereClause: WhereOptions = { id } as any;
-    const deletedRows = await this.model.destroy({ where: whereClause });
-    return deletedRows > 0;
+  async update(id: string, data: Partial<T>): Promise<T | null> {
+    return await this.model.findByIdAndUpdate(id, data, { new: true });
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const result = await this.model.findByIdAndDelete(id);
+    return !!result;
+  }
+
+  async findAll(skip: number = 0, limit: number = 10): Promise<{ data: T[]; total: number }> {
+    const data = await this.model.find().skip(skip).limit(limit);
+    const total = await this.model.countDocuments();
+    return { data, total };
   }
 }

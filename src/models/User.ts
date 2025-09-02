@@ -1,58 +1,52 @@
-import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/database';
+import mongoose, { Document, Schema } from 'mongoose';
 
-export class User extends Model {
-  public id!: number;
-  public organization_id!: number;
-  public name!: string;
-  public email!: string;
-  public password!: string;
-  public user_type!: 'admin' | 'user';
-  public is_active!: boolean;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+export interface IUser extends Document {
+  id: string;
+  organization_id: mongoose.Types.ObjectId;
+  name: string;
+  email: string;
+  password: string;
+  user_type: 'admin' | 'user';
+  is_active: boolean;
+  is_verified: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-User.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    organization_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'organizations',
-        key: 'id',
-      },
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    user_type: {
-      type: DataTypes.ENUM('admin', 'user'),
-      defaultValue: 'user',
-    },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
+const userSchema = new Schema<IUser>({
+  organization_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true,
   },
-  {
-    sequelize,
-    modelName: 'User',
-    tableName: 'users',
-  }
-);
+  name: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  user_type: {
+    type: String,
+    enum: ['admin', 'user'],
+    default: 'user',
+  },
+  is_active: {
+    type: Boolean,
+    default: true,
+  },
+  is_verified: {
+    type: Boolean,
+    default: false,
+  },
+}, {
+  timestamps: true,
+});
+
+export const User = mongoose.model<IUser>('User', userSchema);

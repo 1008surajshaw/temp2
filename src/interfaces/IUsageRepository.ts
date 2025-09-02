@@ -1,11 +1,11 @@
-import { Usage } from '../models/Usage';
+import { IUsage } from '../models/Usage';
 
 export interface IUsageRepository {
-  create(data: Partial<Usage>): Promise<Usage>;
-  update(id: number, data: Partial<Usage>): Promise<Usage | null>;
-  findById(id: number): Promise<Usage | null>;
-  findByUser(userId: number): Promise<Usage[]>;
-  findByUserAndFeature(userId: number, featureId: number, period: string): Promise<Usage | null>;
-  findByUserAndPeriod(userId: number, period: string): Promise<Usage[]>;
-  incrementUsage(userId: number, featureId: number, period: string, increment: number): Promise<Usage | null>;
+  create(data: Partial<IUsage>): Promise<IUsage>;
+  update(id: string, data: Partial<IUsage>): Promise<IUsage | null>;
+  findById(id: string): Promise<IUsage | null>;
+  findByUser(userId: string): Promise<IUsage[]>;
+  findByUserAndFeature(userId: string, featureId: string): Promise<IUsage[]>;
+  findByFeature(featureId: string): Promise<IUsage[]>;
+  getTotalUsageByUserAndFeature(userId: string, featureId: string): Promise<number>;
 }

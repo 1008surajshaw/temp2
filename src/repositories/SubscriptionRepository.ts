@@ -1,38 +1,42 @@
 import { ISubscriptionRepository } from '../interfaces/ISubscriptionRepository';
-import { UserSubscription } from '../models/UserSubscription';
-import { Plan } from '../models/Plan';
+import { UserSubscription, IUserSubscription } from '../models/UserSubscription';
 import { BaseRepository } from './BaseRepository';
 
-export class SubscriptionRepository extends BaseRepository<UserSubscription> implements ISubscriptionRepository {
+export class SubscriptionRepository extends BaseRepository<IUserSubscription> implements ISubscriptionRepository {
   constructor() {
     super(UserSubscription);
   }
 
-  async findByUser(userId: number): Promise<UserSubscription[]> {
-    return await this.model.findAll({
-      where: { user_id: userId } as any,
-      order: [['createdAt', 'DESC']],
-    });
+  async findByUser(userId: string): Promise<IUserSubscription[]> {
+    return await this.model.find({ user_id: userId }).sort({ createdAt: -1 });
   }
 
-  async findActiveByUser(userId: number): Promise<UserSubscription[]> {
-    return await this.model.findAll({
-      where: { 
-        user_id: userId,
-        status: 'active'
-      } as any,
-      order: [['createdAt', 'DESC']],
-    });
+  async findActiveByUser(userId: string): Promise<IUserSubscription[]> {
+    return await this.model.find({ 
+      user_id: userId, 
+      is_active: true,
+      end_date: { $gte: new Date() }
+    }).sort({ createdAt: -1 });
   }
 
-  async findWithPlan(id: number): Promise<UserSubscription | null> {
-    return await this.model.findByPk(id, {
-      include: [
-        {
-          model: Plan,
-          as: 'plan',
-        },
-      ],
-    });
+  async findByPlan(planId: string): Promise<IUserSubscription[]> {
+    return await this.model.find({ plan_id: planId }).sort({ createdAt: -1 });
+  }
+
+  async findById(id: string): Promise<IUserSubscription | null> {
+    return await this.model.findById(id);
+  }
+
+  async create(data: Partial<IUserSubscription>): Promise<IUserSubscription> {
+    return await this.model.create(data);
+  }
+
+  async update(id: string, data: Partial<IUserSubscription>): Promise<IUserSubscription | null> {
+    return await this.model.findByIdAndUpdate(id, data, { new: true });
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const result = await this.model.findByIdAndDelete(id);
+    return !!result;
   }
 }

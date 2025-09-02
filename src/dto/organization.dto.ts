@@ -10,7 +10,7 @@ export interface UpdateOrganizationDto {
 }
 
 export interface OrganizationResponseDto {
-  id: number;
+  id: string;
   name: string;
   description: string;
   is_active: boolean;

@@ -1,35 +1,34 @@
 import { IPlanRepository } from '../interfaces/IPlanRepository';
-import { Plan } from '../models/Plan';
-import { PlanFeature } from '../models/PlanFeature';
-import { Feature } from '../models/Feature';
+import { Plan, IPlan } from '../models/Plan';
 import { BaseRepository } from './BaseRepository';
 
-export class PlanRepository extends BaseRepository<Plan> implements IPlanRepository {
+export class PlanRepository extends BaseRepository<IPlan> implements IPlanRepository {
   constructor() {
     super(Plan);
   }
 
-  async findByOrganization(organizationId: number): Promise<Plan[]> {
-    return await this.model.findAll({
-      where: { organization_id: organizationId } as any,
-      order: [['createdAt', 'DESC']],
-    });
+  async findByOrganization(organizationId: string): Promise<IPlan[]> {
+    return await this.model.find({ organization_id: organizationId }).sort({ createdAt: -1 });
   }
 
-  async findWithFeatures(id: number): Promise<Plan | null> {
-    return await this.model.findByPk(id, {
-      include: [
-        {
-          model: PlanFeature,
-          as: 'planFeatures',
-          include: [
-            {
-              model: Feature,
-              as: 'feature',
-            },
-          ],
-        },
-      ],
-    });
+  async findWithFeatures(id: string): Promise<IPlan | null> {
+    return await this.model.findById(id).populate('features');
+  }
+
+  async findById(id: string): Promise<IPlan | null> {
+    return await this.model.findById(id);
+  }
+
+  async create(data: Partial<IPlan>): Promise<IPlan> {
+    return await this.model.create(data);
+  }
+
+  async update(id: string, data: Partial<IPlan>): Promise<IPlan | null> {
+    return await this.model.findByIdAndUpdate(id, data, { new: true });
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const result = await this.model.findByIdAndDelete(id);
+    return !!result;
   }
 }

@@ -1,58 +1,42 @@
-import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/database';
+import mongoose, { Document, Schema } from 'mongoose';
 
-export class Feature extends Model {
-  public id!: number;
-  public organization_id!: number;
-  public name!: string;
-  public feature_key!: string;
-  public description!: string;
-  public is_active!: boolean;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+export interface IFeature extends Document {
+  id: string;
+  organization_id: mongoose.Types.ObjectId;
+  name: string;
+  feature_key: string;
+  description?: string;
+  is_active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-Feature.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    organization_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'organizations',
-        key: 'id',
-      },
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    feature_key: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
+const featureSchema = new Schema<IFeature>({
+  organization_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true,
   },
-  {
-    sequelize,
-    modelName: 'Feature',
-    tableName: 'features',
-    indexes: [
-      {
-        unique: true,
-        fields: ['organization_id', 'feature_key'],
-      },
-    ],
-  }
-);
+  name: {
+    type: String,
+    required: true,
+  },
+  feature_key: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    default: '',
+  },
+  is_active: {
+    type: Boolean,
+    default: true,
+  },
+}, {
+  timestamps: true,
+});
+
+featureSchema.index({ organization_id: 1, feature_key: 1 }, { unique: true });
+
+export const Feature = mongoose.model<IFeature>('Feature', featureSchema);

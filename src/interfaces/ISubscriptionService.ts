@@ -2,9 +2,9 @@ import { CreateSubscriptionDto, UpdateSubscriptionDto, SubscriptionResponseDto }
 
 export interface ISubscriptionService {
   createSubscription(data: CreateSubscriptionDto): Promise<SubscriptionResponseDto>;
-  updateSubscription(id: number, data: UpdateSubscriptionDto): Promise<SubscriptionResponseDto | null>;
-  cancelSubscription(id: number): Promise<SubscriptionResponseDto | null>;
-  getSubscriptionById(id: number): Promise<SubscriptionResponseDto | null>;
-  getSubscriptionsByUser(userId: number): Promise<SubscriptionResponseDto[]>;
-  getActiveSubscriptionsByUser(userId: number): Promise<SubscriptionResponseDto[]>;
+  updateSubscription(id: string, data: UpdateSubscriptionDto): Promise<SubscriptionResponseDto | null>;
+  cancelSubscription(id: string): Promise<SubscriptionResponseDto | null>;
+  getSubscriptionById(id: string): Promise<SubscriptionResponseDto | null>;
+  getSubscriptionsByUser(userId: string): Promise<SubscriptionResponseDto[]>;
+  getActiveSubscriptionsByUser(userId: string): Promise<SubscriptionResponseDto[]>;
 }

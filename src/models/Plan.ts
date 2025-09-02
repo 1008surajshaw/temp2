@@ -1,57 +1,46 @@
-import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/database';
+import mongoose, { Document, Schema } from 'mongoose';
 
-export class Plan extends Model {
-  public id!: number;
-  public organization_id!: number;
-  public name!: string;
-  public description!: string;
-  public price!: number;
-  public billing_cycle!: 'monthly' | 'yearly';
-  public is_active!: boolean;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+export interface IPlan extends Document {
+  id: string;
+  organization_id: mongoose.Types.ObjectId;
+  name: string;
+  description?: string;
+  price: number;
+  billing_cycle: 'monthly' | 'yearly';
+  is_active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-Plan.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    organization_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'organizations',
-        key: 'id',
-      },
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    price: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
-    },
-    billing_cycle: {
-      type: DataTypes.ENUM('monthly', 'yearly'),
-      allowNull: false,
-    },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
+const planSchema = new Schema<IPlan>({
+  organization_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true,
   },
-  {
-    sequelize,
-    modelName: 'Plan',
-    tableName: 'plans',
-  }
-);
+  name: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    default: '',
+  },
+  price: {
+    type: Number,
+    required: true,
+  },
+  billing_cycle: {
+    type: String,
+    enum: ['monthly', 'yearly'],
+    required: true,
+  },
+  is_active: {
+    type: Boolean,
+    default: true,
+  },
+}, {
+  timestamps: true,
+});
+
+export const Plan = mongoose.model<IPlan>('Plan', planSchema);

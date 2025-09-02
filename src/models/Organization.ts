@@ -1,39 +1,30 @@
-import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/database';
+import mongoose, { Document, Schema } from 'mongoose';
 
-export class Organization extends Model {
-  public id!: number;
-  public name!: string;
-  public description!: string;
-  public is_active!: boolean;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+export interface IOrganization extends Document {
+  id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-Organization.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
+const organizationSchema = new Schema<IOrganization>({
+  name: {
+    type: String,
+    required: true,
+    unique: true,
   },
-  {
-    sequelize,
-    modelName: 'Organization',
-    tableName: 'organizations',
-  }
-);
+  description: {
+    type: String,
+    default: '',
+  },
+  is_active: {
+    type: Boolean,
+    default: true,
+  },
+}, {
+  timestamps: true,
+});
+
+export const Organization = mongoose.model<IOrganization>('Organization', organizationSchema);

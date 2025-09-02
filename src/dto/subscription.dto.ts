@@ -1,26 +1,25 @@
 export interface CreateSubscriptionDto {
-  user_id: number;
-  plan_id: number;
+  user_id: string;
+  plan_id: string;
   start_date: Date;
   end_date: Date;
-  auto_renew?: boolean;
+  is_active?: boolean;
 }
 
 export interface UpdateSubscriptionDto {
-  status?: 'active' | 'inactive' | 'cancelled' | 'expired';
+  start_date?: Date;
   end_date?: Date;
-  auto_renew?: boolean;
+  is_active?: boolean;
 }
 
 export interface SubscriptionResponseDto {
-  id: number;
-  user_id: number;
-  plan_id: number;
+  id: string;
+  user_id: string;
+  plan_id: string;
   plan_name: string;
-  status: 'active' | 'inactive' | 'cancelled' | 'expired';
   start_date: Date;
   end_date: Date;
-  auto_renew: boolean;
+  is_active: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,10 +1,10 @@
-import { Feature } from '../models/Feature';
+import { IFeature } from '../models/Feature';
 
 export interface IFeatureRepository {
-  create(data: Partial<Feature>): Promise<Feature>;
-  update(id: number, data: Partial<Feature>): Promise<Feature | null>;
-  delete(id: number): Promise<boolean>;
-  findById(id: number): Promise<Feature | null>;
-  findByOrganization(organizationId: number): Promise<Feature[]>;
-  findByFeatureKey(organizationId: number, featureKey: string): Promise<Feature | null>;
+  create(data: Partial<IFeature>): Promise<IFeature>;
+  update(id: string, data: Partial<IFeature>): Promise<IFeature | null>;
+  delete(id: string): Promise<boolean>;
+  findById(id: string): Promise<IFeature | null>;
+  findByOrganization(organizationId: string): Promise<IFeature[]>;
+  findByFeatureKey(organizationId: string, featureKey: string): Promise<IFeature | null>;
 }

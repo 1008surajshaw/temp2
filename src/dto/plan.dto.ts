@@ -1,5 +1,5 @@
 export interface CreatePlanDto {
-  organization_id: number;
+  organization_id: string;
   name: string;
   description?: string;
   price: number;
@@ -17,14 +17,14 @@ export interface UpdatePlanDto {
 }
 
 export interface PlanFeatureDto {
-  feature_id: number;
+  feature_id: string;
   feature_limit: number;
   is_unlimited: boolean;
 }
 
 export interface PlanResponseDto {
-  id: number;
-  organization_id: number;
+  id: string;
+  organization_id: string;
   name: string;
   description: string;
   price: number;
@@ -36,8 +36,8 @@ export interface PlanResponseDto {
 }
 
 export interface PlanFeatureResponseDto {
-  id: number;
-  feature_id: number;
+  id: string;
+  feature_id: string;
   feature_name: string;
   feature_key: string;
   feature_limit: number;

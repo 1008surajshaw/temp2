@@ -24,7 +24,7 @@ export class UserController {
 
   async getUserById(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const user = await this.userService.getUserById(id);
       
       if (!user) {
@@ -72,7 +72,7 @@ export class UserController {
 
   async updateUser(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const userData: UpdateUserDto = req.body;
       const user = await this.userService.updateUser(id, userData);
       
@@ -102,7 +102,7 @@ export class UserController {
 
   async deleteUser(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const deleted = await this.userService.deleteUser(id);
       
       if (!deleted) {

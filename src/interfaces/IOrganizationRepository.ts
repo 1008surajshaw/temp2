@@ -1,9 +1,8 @@
-import { Organization } from '../models/Organization';
+import { IOrganization } from '../models/Organization';
 
 export interface IOrganizationRepository {
-  create(data: Partial<Organization>): Promise<Organization>;
-  update(id: number, data: Partial<Organization>): Promise<Organization | null>;
-  findById(id: number): Promise<Organization | null>;
-  findAll(): Promise<Organization[]>;
-  findByName(name: string): Promise<Organization | null>;
+  create(data: Partial<IOrganization>): Promise<IOrganization>;
+  update(id: string, data: Partial<IOrganization>): Promise<IOrganization | null>;
+  findById(id: string): Promise<IOrganization | null>;
+  findByName(name: string): Promise<IOrganization | null>;
 }

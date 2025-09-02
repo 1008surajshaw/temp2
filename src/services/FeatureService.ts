@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { IFeatureService } from '../interfaces/IFeatureService';
 import { IFeatureRepository } from '../interfaces/IFeatureRepository';
 import { IOrganizationRepository } from '../interfaces/IOrganizationRepository';
@@ -23,11 +24,14 @@ export class FeatureService implements IFeatureService {
       throw new Error('Feature key already exists in this organization');
     }
 
-    const feature = await this.featureRepository.create(data);
+    const feature = await this.featureRepository.create({
+      ...data,
+      organization_id: new mongoose.Types.ObjectId(data.organization_id)
+    });
     return this.mapToResponseDto(feature);
   }
 
-  async updateFeature(id: number, data: UpdateFeatureDto): Promise<FeatureResponseDto | null> {
+  async updateFeature(id: string, data: UpdateFeatureDto): Promise<FeatureResponseDto | null> {
     const existingFeature = await this.featureRepository.findById(id);
     if (!existingFeature) {
       return null;
@@ -35,10 +39,10 @@ export class FeatureService implements IFeatureService {
 
     if (data.feature_key) {
       const duplicateFeature = await this.featureRepository.findByFeatureKey(
-        existingFeature.organization_id,
+        (existingFeature.organization_id as mongoose.Types.ObjectId).toString(),
         data.feature_key
       );
-      if (duplicateFeature && duplicateFeature.id !== id) {
+      if (duplicateFeature && (duplicateFeature._id as mongoose.Types.ObjectId).toString() !== id) {
         throw new Error('Feature key already exists in this organization');
       }
     }
@@ -47,21 +51,21 @@ export class FeatureService implements IFeatureService {
     return feature ? this.mapToResponseDto(feature) : null;
   }
 
-  async deleteFeature(id: number): Promise<boolean> {
+  async deleteFeature(id: string): Promise<boolean> {
     return await this.featureRepository.delete(id);
   }
 
-  async getFeatureById(id: number): Promise<FeatureResponseDto | null> {
+  async getFeatureById(id: string): Promise<FeatureResponseDto | null> {
     const feature = await this.featureRepository.findById(id);
     return feature ? this.mapToResponseDto(feature) : null;
   }
 
-  async getFeaturesByOrganization(organizationId: number): Promise<FeatureResponseDto[]> {
+  async getFeaturesByOrganization(organizationId: string): Promise<FeatureResponseDto[]> {
     const features = await this.featureRepository.findByOrganization(organizationId);
     return features.map(this.mapToResponseDto);
   }
 
-  async toggleFeatureStatus(id: number): Promise<FeatureResponseDto | null> {
+  async toggleFeatureStatus(id: string): Promise<FeatureResponseDto | null> {
     const feature = await this.featureRepository.findById(id);
     if (!feature) {
       return null;
@@ -75,8 +79,8 @@ export class FeatureService implements IFeatureService {
 
   private mapToResponseDto(feature: any): FeatureResponseDto {
     return {
-      id: feature.id,
-      organization_id: feature.organization_id,
+      id: feature.id || (feature._id as mongoose.Types.ObjectId).toString(),
+      organization_id: (feature.organization_id as mongoose.Types.ObjectId).toString(),
       name: feature.name,
       feature_key: feature.feature_key,
       description: feature.description,

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import userRoutes from './userRoutes';
 import organizationRoutes from './organizationRoutes';
 import featureRoutes from './featureRoutes';
+import authRoutes from './authRoutes';
 
 const router = Router();
 
@@ -11,6 +12,7 @@ router.get('/', (req, res) => {
 });
 
 // Feature routes
+router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/features', featureRoutes);

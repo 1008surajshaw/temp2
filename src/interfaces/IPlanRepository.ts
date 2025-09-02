@@ -1,10 +1,10 @@
-import { Plan } from '../models/Plan';
+import { IPlan } from '../models/Plan';
 
 export interface IPlanRepository {
-  create(data: Partial<Plan>): Promise<Plan>;
-  update(id: number, data: Partial<Plan>): Promise<Plan | null>;
-  delete(id: number): Promise<boolean>;
-  findById(id: number): Promise<Plan | null>;
-  findByOrganization(organizationId: number): Promise<Plan[]>;
-  findWithFeatures(id: number): Promise<Plan | null>;
+  create(data: Partial<IPlan>): Promise<IPlan>;
+  update(id: string, data: Partial<IPlan>): Promise<IPlan | null>;
+  delete(id: string): Promise<boolean>;
+  findById(id: string): Promise<IPlan | null>;
+  findByOrganization(organizationId: string): Promise<IPlan[]>;
+  findWithFeatures(id: string): Promise<IPlan | null>;
 }

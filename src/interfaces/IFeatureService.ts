@@ -2,9 +2,9 @@ import { CreateFeatureDto, UpdateFeatureDto, FeatureResponseDto } from '../dto/f
 
 export interface IFeatureService {
   createFeature(data: CreateFeatureDto): Promise<FeatureResponseDto>;
-  updateFeature(id: number, data: UpdateFeatureDto): Promise<FeatureResponseDto | null>;
-  deleteFeature(id: number): Promise<boolean>;
-  getFeatureById(id: number): Promise<FeatureResponseDto | null>;
-  getFeaturesByOrganization(organizationId: number): Promise<FeatureResponseDto[]>;
-  toggleFeatureStatus(id: number): Promise<FeatureResponseDto | null>;
+  updateFeature(id: string, data: UpdateFeatureDto): Promise<FeatureResponseDto | null>;
+  deleteFeature(id: string): Promise<boolean>;
+  getFeatureById(id: string): Promise<FeatureResponseDto | null>;
+  getFeaturesByOrganization(organizationId: string): Promise<FeatureResponseDto[]>;
+  toggleFeatureStatus(id: string): Promise<FeatureResponseDto | null>;
 }

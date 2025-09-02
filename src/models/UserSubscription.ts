@@ -1,61 +1,41 @@
-import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/database';
+import mongoose, { Document, Schema } from 'mongoose';
 
-export class UserSubscription extends Model {
-  public id!: number;
-  public user_id!: number;
-  public plan_id!: number;
-  public status!: 'active' | 'inactive' | 'cancelled' | 'expired';
-  public start_date!: Date;
-  public end_date!: Date;
-  public auto_renew!: boolean;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+export interface IUserSubscription extends Document {
+  id: string;
+  user_id: mongoose.Types.ObjectId;
+  plan_id: mongoose.Types.ObjectId;
+  start_date: Date;
+  end_date: Date;
+  is_active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-UserSubscription.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    user_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id',
-      },
-    },
-    plan_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'plans',
-        key: 'id',
-      },
-    },
-    status: {
-      type: DataTypes.ENUM('active', 'inactive', 'cancelled', 'expired'),
-      defaultValue: 'active',
-    },
-    start_date: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    end_date: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    auto_renew: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
+const userSubscriptionSchema = new Schema<IUserSubscription>({
+  user_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
   },
-  {
-    sequelize,
-    modelName: 'UserSubscription',
-    tableName: 'user_subscriptions',
-  }
-);
+  plan_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Plan',
+    required: true,
+  },
+  start_date: {
+    type: Date,
+    required: true,
+  },
+  end_date: {
+    type: Date,
+    required: true,
+  },
+  is_active: {
+    type: Boolean,
+    default: true,
+  },
+}, {
+  timestamps: true,
+});
+
+export const UserSubscription = mongoose.model<IUserSubscription>('UserSubscription', userSubscriptionSchema);

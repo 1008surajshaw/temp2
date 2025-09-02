@@ -1,5 +1,5 @@
 export interface CreateFeatureDto {
-  organization_id: number;
+  organization_id: string;
   name: string;
   feature_key: string;
   description?: string;
@@ -13,8 +13,8 @@ export interface UpdateFeatureDto {
 }
 
 export interface FeatureResponseDto {
-  id: number;
-  organization_id: number;
+  id: string;
+  organization_id: string;
   name: string;
   feature_key: string;
   description: string;
