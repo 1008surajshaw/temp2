@@ -23,7 +23,7 @@ export class PlanService implements IPlanService {
     // Create plan features
     for (const feature of data.features) {
       await PlanFeature.create({
-        plan_id: plan._id,
+        plan_id: new mongoose.Types.ObjectId(plan.id),
         feature_id: new mongoose.Types.ObjectId(feature.feature_id),
         feature_limit: feature.feature_limit,
         is_unlimited: feature.is_unlimited,
@@ -47,7 +47,7 @@ export class PlanService implements IPlanService {
 
     // Update features if provided
     if (data.features) {
-      await PlanFeature.deleteMany({ plan_id: id });
+      await PlanFeature.deleteMany({ plan_id: new mongoose.Types.ObjectId(id) });
       for (const feature of data.features) {
         await PlanFeature.create({
           plan_id: new mongoose.Types.ObjectId(id),
@@ -74,7 +74,7 @@ export class PlanService implements IPlanService {
   async getPlansByOrganization(organizationId: string): Promise<PlanResponseDto[]> {
     const plans = await this.planRepository.findByOrganization(organizationId);
     const plansWithFeatures = await Promise.all(
-      plans.map(plan => this.planRepository.findWithFeatures((plan._id as mongoose.Types.ObjectId).toString()))
+      plans.map(plan => this.planRepository.findWithFeatures(plan.id))
     );
     return plansWithFeatures.filter(Boolean).map(this.mapToResponseDto);
   }

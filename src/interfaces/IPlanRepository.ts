@@ -6,5 +6,5 @@ export interface IPlanRepository {
   delete(id: string): Promise<boolean>;
   findById(id: string): Promise<IPlan | null>;
   findByOrganization(organizationId: string): Promise<IPlan[]>;
-  findWithFeatures(id: string): Promise<IPlan | null>;
+  findWithFeatures(id: string): Promise<any | null>;
 }
