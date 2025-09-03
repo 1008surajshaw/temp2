@@ -1,10 +1,14 @@
 import { CreateUsageDto, UpdateUsageDto, UsageResponseDto } from '../dto/usage.dto';
 
 export interface IUsageService {
-  createUsage(data: CreateUsageDto): Promise<UsageResponseDto>;
-  updateUsage(id: string, data: UpdateUsageDto): Promise<UsageResponseDto | null>;
-  getUsageById(id: string): Promise<UsageResponseDto | null>;
-  getUsageByUser(userId: string): Promise<UsageResponseDto[]>;
-  getUsageByUserAndFeature(userId: string, featureId: string): Promise<UsageResponseDto[]>;
-  getTotalUsageByUserAndFeature(userId: string, featureId: string): Promise<number>;
+  createUsage(data: { user_id: string; feature_id: string; usage_count?: number }): Promise<{ success: boolean; message?: string; remaining?: number }>;
+  getUsageByUserAndFeature(userId: string, featureId: string): Promise<{
+    feature_id: string;
+    feature_name: string;
+    feature_key: string;
+    total_limit: number;
+    is_unlimited: boolean;
+    current_usage: number;
+    remaining: number;
+  } | null>;
 }

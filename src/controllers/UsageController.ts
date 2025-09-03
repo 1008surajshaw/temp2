@@ -1,40 +1,46 @@
 import { Request, Response } from 'express';
-import { IUsageService } from '../interfaces/IUsageService';
-import { CreateUsageDto, UpdateUsageDto } from '../dto/usage.dto';
+import { IUserFeatureLimitService } from '../interfaces/IUserFeatureLimitService';
 import { ApiResponse } from '../types/common';
 
 export class UsageController {
-  constructor(private usageService: IUsageService) {}
+  constructor(private userFeatureLimitService: IUserFeatureLimitService) {}
 
   async createUsage(req: Request, res: Response): Promise<void> {
     try {
-      const usageData: CreateUsageDto = req.body;
-      const usage = await this.usageService.createUsage(usageData);
+      const { user_id, feature_id, usage_count } = req.body;
+      
+      const result = await this.userFeatureLimitService.useFeature(
+        user_id, 
+        feature_id, 
+        usage_count || 1
+      );
       
       const response: ApiResponse = {
-        success: true,
-        data: usage,
-        message: 'Usage record created successfully'
+        success: result.success,
+        data: result.success ? { remaining: result.remaining } : undefined,
+        message: result.message
       };
-      res.status(201).json(response);
+      
+      res.status(result.success ? 201 : 400).json(response);
     } catch (error) {
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Internal server error'
       };
-      res.status(400).json(response);
+      res.status(500).json(response);
     }
   }
 
-  async getUsageById(req: Request, res: Response): Promise<void> {
+  async getUsageByUserAndFeature(req: Request, res: Response): Promise<void> {
     try {
-      const id = req.params.id;
-      const usage = await this.usageService.getUsageById(id);
+      const { userId, featureId } = req.params;
+      
+      const usage = await this.userFeatureLimitService.getFeatureUsageByUser(userId, featureId);
       
       if (!usage) {
         const response: ApiResponse = {
           success: false,
-          error: 'Usage record not found'
+          error: 'Feature usage not found'
         };
         res.status(404).json(response);
         return;
@@ -51,93 +57,6 @@ export class UsageController {
         error: error instanceof Error ? error.message : 'Internal server error'
       };
       res.status(500).json(response);
-    }
-  }
-
-  async getUsageByUser(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = req.params.userId;
-      const usages = await this.usageService.getUsageByUser(userId);
-      
-      const response: ApiResponse = {
-        success: true,
-        data: usages
-      };
-      res.json(response);
-    } catch (error) {
-      const response: ApiResponse = {
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error'
-      };
-      res.status(500).json(response);
-    }
-  }
-
-  async getUsageByUserAndFeature(req: Request, res: Response): Promise<void> {
-    try {
-      const { userId, featureId } = req.params;
-      const usages = await this.usageService.getUsageByUserAndFeature(userId, featureId);
-      
-      const response: ApiResponse = {
-        success: true,
-        data: usages
-      };
-      res.json(response);
-    } catch (error) {
-      const response: ApiResponse = {
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error'
-      };
-      res.status(500).json(response);
-    }
-  }
-
-  async getTotalUsageByUserAndFeature(req: Request, res: Response): Promise<void> {
-    try {
-      const { userId, featureId } = req.params;
-      const total = await this.usageService.getTotalUsageByUserAndFeature(userId, featureId);
-      
-      const response: ApiResponse = {
-        success: true,
-        data: { total }
-      };
-      res.json(response);
-    } catch (error) {
-      const response: ApiResponse = {
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error'
-      };
-      res.status(500).json(response);
-    }
-  }
-
-  async updateUsage(req: Request, res: Response): Promise<void> {
-    try {
-      const id = req.params.id;
-      const usageData: UpdateUsageDto = req.body;
-      const usage = await this.usageService.updateUsage(id, usageData);
-      
-      if (!usage) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Usage record not found'
-        };
-        res.status(404).json(response);
-        return;
-      }
-      
-      const response: ApiResponse = {
-        success: true,
-        data: usage,
-        message: 'Usage record updated successfully'
-      };
-      res.json(response);
-    } catch (error) {
-      const response: ApiResponse = {
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error'
-      };
-      res.status(400).json(response);
     }
   }
 }
