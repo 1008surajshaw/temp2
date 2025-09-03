@@ -2,21 +2,41 @@ import mongoose from 'mongoose';
 import { IUsageService } from '../interfaces/IUsageService';
 import { IUsageRepository } from '../interfaces/IUsageRepository';
 import { IFeatureRepository } from '../interfaces/IFeatureRepository';
+import { IUserFeatureLimitService } from '../interfaces/IUserFeatureLimitService';
 import { CreateUsageDto, UpdateUsageDto, UsageResponseDto } from '../dto/usage.dto';
 
 export class UsageService implements IUsageService {
   constructor(
     private usageRepository: IUsageRepository,
-    private featureRepository: IFeatureRepository
+    private featureRepository: IFeatureRepository,
+    private userFeatureLimitService: IUserFeatureLimitService
   ) {}
 
   async createUsage(data: CreateUsageDto): Promise<UsageResponseDto> {
+    // Check if usage is allowed
+    const isAllowed = await this.userFeatureLimitService.checkFeatureUsageAllowed(
+      data.user_id, 
+      data.feature_id, 
+      data.usage_count
+    );
+    
+    if (!isAllowed) {
+      throw new Error('Usage limit exceeded for this feature');
+    }
+
     const usage = await this.usageRepository.create({
       user_id: new mongoose.Types.ObjectId(data.user_id),
       feature_id: new mongoose.Types.ObjectId(data.feature_id),
       usage_count: data.usage_count,
       usage_date: data.usage_date || new Date(),
     });
+
+    // Update user feature limit usage
+    await this.userFeatureLimitService.incrementUsage(
+      data.user_id, 
+      data.feature_id, 
+      data.usage_count
+    );
 
     const feature = await this.featureRepository.findById(data.feature_id);
     return this.mapToResponseDto(usage, feature);

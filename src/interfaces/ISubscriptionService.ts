@@ -7,4 +7,5 @@ export interface ISubscriptionService {
   getSubscriptionById(id: string): Promise<SubscriptionResponseDto | null>;
   getSubscriptionsByUser(userId: string): Promise<SubscriptionResponseDto[]>;
   getActiveSubscriptionsByUser(userId: string): Promise<SubscriptionResponseDto[]>;
+  recalculateUserLimits(userId: string): Promise<void>;
 }

@@ -90,9 +90,9 @@ export class PlanService implements IPlanService {
       is_active: plan.is_active,
       features: plan.planFeatures?.map((pf: any) => ({
         id: pf.id,
-        feature_id: (pf.feature_id as mongoose.Types.ObjectId).toString(),
-        feature_name: pf.feature.name,
-        feature_key: pf.feature.feature_key,
+        feature_id: (pf.feature_id._id as mongoose.Types.ObjectId).toString(),
+        feature_name: pf.feature_id.name,
+        feature_key: pf.feature_id.feature_key,
         feature_limit: pf.feature_limit,
         is_unlimited: pf.is_unlimited,
       })) || [],

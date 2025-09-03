@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { IPlanRepository } from '../interfaces/IPlanRepository';
 import { Plan, IPlan } from '../models/Plan';
 import { PlanFeature } from '../models/PlanFeature';
@@ -17,7 +18,7 @@ export class PlanRepository extends BaseRepository<IPlan> implements IPlanReposi
     if (!plan) return null;
 
     // Get plan features with populated feature details
-    const planFeatures = await PlanFeature.find({ plan_id: id })
+    const planFeatures = await PlanFeature.find({ plan_id: new mongoose.Types.ObjectId(id) })
       .populate('feature_id', 'name feature_key')
       .exec();
 

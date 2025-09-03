@@ -32,6 +32,12 @@ const planFeatureSchema = new Schema<IPlanFeature>({
   },
 }, {
   timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+planFeatureSchema.virtual('id').get(function() {
+  return this._id.toHexString();
 });
 
 planFeatureSchema.index({ plan_id: 1, feature_id: 1 }, { unique: true });

@@ -2,12 +2,14 @@ import mongoose from 'mongoose';
 import { ISubscriptionService } from '../interfaces/ISubscriptionService';
 import { ISubscriptionRepository } from '../interfaces/ISubscriptionRepository';
 import { IPlanRepository } from '../interfaces/IPlanRepository';
+import { IUserFeatureLimitService } from '../interfaces/IUserFeatureLimitService';
 import { CreateSubscriptionDto, UpdateSubscriptionDto, SubscriptionResponseDto } from '../dto/subscription.dto';
 
 export class SubscriptionService implements ISubscriptionService {
   constructor(
     private subscriptionRepository: ISubscriptionRepository,
-    private planRepository: IPlanRepository
+    private planRepository: IPlanRepository,
+    private userFeatureLimitService: IUserFeatureLimitService
   ) {}
 
   async createSubscription(data: CreateSubscriptionDto): Promise<SubscriptionResponseDto> {
@@ -23,6 +25,9 @@ export class SubscriptionService implements ISubscriptionService {
       end_date: data.end_date,
       is_active: data.is_active !== undefined ? data.is_active : true,
     });
+
+    // Recalculate user feature limits after creating subscription
+    await this.userFeatureLimitService.calculateUserFeatureLimits(data.user_id);
 
     return this.mapToResponseDto(subscription, plan);
   }
@@ -40,6 +45,10 @@ export class SubscriptionService implements ISubscriptionService {
       is_active: false
     });
     if (!subscription) return null;
+
+    // Recalculate user feature limits after cancelling subscription
+    const userId = (subscription.user_id as mongoose.Types.ObjectId).toString();
+    await this.userFeatureLimitService.calculateUserFeatureLimits(userId);
 
     const plan = await this.planRepository.findById((subscription.plan_id as mongoose.Types.ObjectId).toString());
     return this.mapToResponseDto(subscription, plan);
@@ -73,6 +82,10 @@ export class SubscriptionService implements ISubscriptionService {
       })
     );
     return results;
+  }
+
+  async recalculateUserLimits(userId: string): Promise<void> {
+    await this.userFeatureLimitService.calculateUserFeatureLimits(userId);
   }
 
   private mapToResponseDto(subscription: any, plan: any): SubscriptionResponseDto {

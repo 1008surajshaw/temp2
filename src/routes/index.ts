@@ -5,6 +5,7 @@ import featureRoutes from './featureRoutes';
 import planRoutes from './planRoutes';
 import subscriptionRoutes from './subscriptionRoutes';
 import usageRoutes from './usageRoutes';
+import userFeatureLimitRoutes from './userFeatureLimitRoutes';
 import authRoutes from './authRoutes';
 
 const router = Router();
@@ -22,5 +23,6 @@ router.use('/features', featureRoutes);
 router.use('/plans', planRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/usage', usageRoutes);
+router.use('/user-limits', userFeatureLimitRoutes);
 
 export default router;
