@@ -3,13 +3,29 @@ import { SubscriptionController } from '../controllers/SubscriptionController';
 import { SubscriptionService } from '../services/SubscriptionService';
 import { SubscriptionRepository } from '../repositories/SubscriptionRepository';
 import { PlanRepository } from '../repositories/PlanRepository';
+import { UserFeatureLimitService } from '../services/UserFeatureLimitService';
+import { UserFeatureLimitRepository } from '../repositories/UserFeatureLimitRepository';
+import { FeatureRepository } from '../repositories/FeatureRepository';
 
 const router = Router();
 
 // Initialize dependencies
 const subscriptionRepository = new SubscriptionRepository();
 const planRepository = new PlanRepository();
-const subscriptionService = new SubscriptionService(subscriptionRepository, planRepository);
+const userFeatureLimitRepository = new UserFeatureLimitRepository();
+const featureRepository = new FeatureRepository();
+
+const userFeatureLimitService = new UserFeatureLimitService(
+  userFeatureLimitRepository,
+  subscriptionRepository,
+  featureRepository
+);
+
+const subscriptionService = new SubscriptionService(
+  subscriptionRepository, 
+  planRepository, 
+  userFeatureLimitService
+);
 const subscriptionController = new SubscriptionController(subscriptionService);
 
 // Subscription routes

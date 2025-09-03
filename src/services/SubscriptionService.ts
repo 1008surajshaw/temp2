@@ -36,6 +36,10 @@ export class SubscriptionService implements ISubscriptionService {
     const subscription = await this.subscriptionRepository.update(id, data);
     if (!subscription) return null;
 
+    // Recalculate user feature limits after updating subscription
+    const userId = (subscription.user_id as mongoose.Types.ObjectId).toString();
+    await this.userFeatureLimitService.calculateUserFeatureLimits(userId);
+
     const plan = await this.planRepository.findById((subscription.plan_id as mongoose.Types.ObjectId).toString());
     return this.mapToResponseDto(subscription, plan);
   }
