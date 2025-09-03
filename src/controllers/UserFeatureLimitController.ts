@@ -24,20 +24,51 @@ export class UserFeatureLimitController {
     }
   }
 
-  async checkFeatureUsage(req: Request, res: Response): Promise<void> {
+  async useFeature(req: Request, res: Response): Promise<void> {
     try {
       const { userId, featureId } = req.params;
-      const { requestedUsage } = req.body;
+      const { usageCount } = req.body;
       
-      const isAllowed = await this.userFeatureLimitService.checkFeatureUsageAllowed(
+      const result = await this.userFeatureLimitService.useFeature(
         userId, 
         featureId, 
-        requestedUsage || 1
+        usageCount || 1
       );
       
       const response: ApiResponse = {
+        success: result.success,
+        data: result.success ? { remaining: result.remaining } : undefined,
+        message: result.message
+      };
+      
+      res.status(result.success ? 200 : 400).json(response);
+    } catch (error) {
+      const response: ApiResponse = {
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal server error'
+      };
+      res.status(500).json(response);
+    }
+  }
+
+  async getFeatureUsage(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId, featureId } = req.params;
+      
+      const usage = await this.userFeatureLimitService.getFeatureUsageByUser(userId, featureId);
+      
+      if (!usage) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Feature usage not found'
+        };
+        res.status(404).json(response);
+        return;
+      }
+      
+      const response: ApiResponse = {
         success: true,
-        data: { allowed: isAllowed }
+        data: usage
       };
       res.json(response);
     } catch (error) {

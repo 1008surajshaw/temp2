@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import { IUserFeatureLimitService } from '../interfaces/IUserFeatureLimitService';
 import { IUserFeatureLimitRepository } from '../interfaces/IUserFeatureLimitRepository';
 import { ISubscriptionRepository } from '../interfaces/ISubscriptionRepository';
-import { IUsageRepository } from '../interfaces/IUsageRepository';
 import { IFeatureRepository } from '../interfaces/IFeatureRepository';
 import { PlanFeature } from '../models/PlanFeature';
 
@@ -10,13 +9,18 @@ export class UserFeatureLimitService implements IUserFeatureLimitService {
   constructor(
     private userFeatureLimitRepository: IUserFeatureLimitRepository,
     private subscriptionRepository: ISubscriptionRepository,
-    private usageRepository: IUsageRepository,
     private featureRepository: IFeatureRepository
   ) {}
 
   async calculateUserFeatureLimits(userId: string): Promise<void> {
     // Get all active subscriptions for user
     const activeSubscriptions = await this.subscriptionRepository.findActiveByUser(userId);
+    
+    if (activeSubscriptions.length === 0) {
+      // No active subscriptions, clear all limits
+      await this.userFeatureLimitRepository.deleteByUser(userId);
+      return;
+    }
     
     // Get all plan features for active subscriptions
     const featureLimits = new Map<string, { limit: number; isUnlimited: boolean }>();
@@ -42,9 +46,10 @@ export class UserFeatureLimitService implements IUserFeatureLimitService {
       }
     }
 
-    // Update user feature limits
+    // Update user feature limits (preserve current usage)
     for (const [featureId, { limit, isUnlimited }] of featureLimits) {
-      const currentUsage = await this.usageRepository.getTotalUsageByUserAndFeature(userId, featureId);
+      const existingLimit = await this.userFeatureLimitRepository.findByUserAndFeature(userId, featureId);
+      const currentUsage = existingLimit?.current_usage || 0;
       
       await this.userFeatureLimitRepository.upsertUserFeatureLimit(userId, featureId, {
         total_limit: limit,
@@ -55,22 +60,21 @@ export class UserFeatureLimitService implements IUserFeatureLimitService {
   }
 
   async getUserFeatureLimit(userId: string, featureId: string): Promise<{ limit: number; isUnlimited: boolean; currentUsage: number }> {
-    const userFeatureLimit = await this.userFeatureLimitRepository.findByUserAndFeature(userId, featureId);
+    let userFeatureLimit = await this.userFeatureLimitRepository.findByUserAndFeature(userId, featureId);
     
     if (!userFeatureLimit) {
-      // Recalculate if not found
+      // Create default limit if no subscriptions exist
       await this.calculateUserFeatureLimits(userId);
-      const recalculated = await this.userFeatureLimitRepository.findByUserAndFeature(userId, featureId);
+      userFeatureLimit = await this.userFeatureLimitRepository.findByUserAndFeature(userId, featureId);
       
-      if (!recalculated) {
-        return { limit: 0, isUnlimited: false, currentUsage: 0 };
+      if (!userFeatureLimit) {
+        // Create with zero limit if no subscription provides this feature
+        userFeatureLimit = await this.userFeatureLimitRepository.upsertUserFeatureLimit(userId, featureId, {
+          total_limit: 0,
+          is_unlimited: false,
+          current_usage: 0,
+        });
       }
-      
-      return {
-        limit: recalculated.total_limit,
-        isUnlimited: recalculated.is_unlimited,
-        currentUsage: recalculated.current_usage,
-      };
     }
 
     return {
@@ -88,14 +92,33 @@ export class UserFeatureLimitService implements IUserFeatureLimitService {
     return (currentUsage + requestedUsage) <= limit;
   }
 
-  async incrementUsage(userId: string, featureId: string, usageCount: number): Promise<void> {
-    const userFeatureLimit = await this.userFeatureLimitRepository.findByUserAndFeature(userId, featureId);
+  async useFeature(userId: string, featureId: string, usageCount: number = 1): Promise<{ success: boolean; message?: string; remaining?: number }> {
+    // Get or create feature limit
+    const { limit, isUnlimited, currentUsage } = await this.getUserFeatureLimit(userId, featureId);
     
+    // Check if usage is allowed
+    if (!isUnlimited && (currentUsage + usageCount) > limit) {
+      return {
+        success: false,
+        message: `Usage limit exceeded. Current: ${currentUsage}, Limit: ${limit}, Requested: ${usageCount}`
+      };
+    }
+    
+    // Update usage
+    const userFeatureLimit = await this.userFeatureLimitRepository.findByUserAndFeature(userId, featureId);
     if (userFeatureLimit) {
       await this.userFeatureLimitRepository.update(userFeatureLimit.id, {
         current_usage: userFeatureLimit.current_usage + usageCount,
       });
     }
+    
+    const newRemaining = isUnlimited ? -1 : Math.max(0, limit - (currentUsage + usageCount));
+    
+    return {
+      success: true,
+      message: 'Feature used successfully',
+      remaining: newRemaining
+    };
   }
 
   async getUserAllFeatureLimits(userId: string): Promise<Array<{
@@ -107,6 +130,9 @@ export class UserFeatureLimitService implements IUserFeatureLimitService {
     current_usage: number;
     remaining: number;
   }>> {
+    // Ensure limits are calculated
+    await this.calculateUserFeatureLimits(userId);
+    
     const userFeatureLimits = await this.userFeatureLimitRepository.findByUser(userId);
     
     const results = await Promise.all(
@@ -126,5 +152,30 @@ export class UserFeatureLimitService implements IUserFeatureLimitService {
     );
 
     return results;
+  }
+
+  async getFeatureUsageByUser(userId: string, featureId: string): Promise<{
+    feature_id: string;
+    feature_name: string;
+    feature_key: string;
+    total_limit: number;
+    is_unlimited: boolean;
+    current_usage: number;
+    remaining: number;
+  } | null> {
+    const userFeatureLimit = await this.userFeatureLimitRepository.findByUserAndFeature(userId, featureId);
+    if (!userFeatureLimit) return null;
+    
+    const feature = await this.featureRepository.findById(featureId);
+    
+    return {
+      feature_id: featureId,
+      feature_name: feature?.name || '',
+      feature_key: feature?.feature_key || '',
+      total_limit: userFeatureLimit.total_limit,
+      is_unlimited: userFeatureLimit.is_unlimited,
+      current_usage: userFeatureLimit.current_usage,
+      remaining: userFeatureLimit.is_unlimited ? -1 : Math.max(0, userFeatureLimit.total_limit - userFeatureLimit.current_usage),
+    };
   }
 }

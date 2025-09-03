@@ -7,7 +7,7 @@ export interface IUserFeatureLimit extends Document {
   total_limit: number;
   is_unlimited: boolean;
   current_usage: number;
-  last_calculated: Date;
+  last_calculated: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,18 +37,15 @@ const userFeatureLimitSchema = new Schema<IUserFeatureLimit>({
     default: 0,
   },
   last_calculated: {
-    type: Date,
-    default: Date.now,
+    type: Schema.Types.ObjectId,
+    ref: 'Usage',
+    required: true,
   },
 }, {
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
 });
 
-userFeatureLimitSchema.virtual('id').get(function() {
-  return this._id.toHexString();
-});
+
 
 userFeatureLimitSchema.index({ user_id: 1, feature_id: 1 }, { unique: true });
 
